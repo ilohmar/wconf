@@ -25,11 +25,7 @@
 
 ;;; Commentary:
 
-;; - workgroups.el was complex, 79k
-;; - https://github.com/pashinin/workgroups2 more so, 179k
-;; - Emacs 24.4 has frameset.el --- build sth light on top
-;; - do not alter any hooks or settings
-;; TODO deal w/ frames or single frame only
+;; See the file README.org
 
 ;;; Code:
 
