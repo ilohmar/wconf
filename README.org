@@ -10,12 +10,13 @@ application.
 
 Can double as a "boss" key; not that you would ever use something like
 that yourself.
-** Use It
-Make sure the files are in your =load-path= --- if you have installed
-from a package archive, that's enough.
+** Using the Package
+Make sure the files are in your =load-path=, and either =(require
+'wconf)= or make sure its autoloads are known to Emacs --- if you have
+installed from a package archive, that should take care of both.
 
-There is nothing particular you have to do to use =wconf.el=.  Here is
-an example from my configuration, however, to show you the intended use:
+Here is an example from my configuration to show you the intended use of
+=wconf=.
 #+begin_src emacs-lisp
 (add-hook 'desktop-after-read-hook      ;so we have all buffers again
           (lambda ()
@@ -61,14 +62,15 @@ function.
 
 A nice feature of =wconf= is that it does not alter any hooks or
 settings outside its own small world, and I intend to keep it that way.
-This implies that there is no way to update the currently active
-configuration, except via one the functions/commands in the package.
+This implies that the currently active configuration is only updated
+explicitly, via one the functions/commands in the package.
 ** Rationale, and Other Packages
 I used https://github.com/tlh/workgroups.el for several years.  It is a
 great package, which offers a lot of additional features besides the
-core business of window configs.  It also has some shortcomings, is
-somewhat complex (at 79k), and I occasionally experienced minor
-glitches.  Most importantly, it has been unmaintained for >3yrs now.
+core business of managing window configs.  It also has some
+shortcomings, is somewhat complex (at 79k), and I occasionally
+experienced minor glitches.  Most importantly, it has been unmaintained
+for >3yrs now.
 
 https://github.com/pashinin/workgroups2 promises to pick up where
 workgroups left, and is actively maintained.  The main difference, as I
@@ -76,7 +78,7 @@ understand it, is the desire to restore "special" buffers as well (help,
 info, org-mode agendas, notmuch mail, you name it).  Finally trying it,
 it did not provide a lot of benefit for my personal needs, but added
 still more complexity.  The functionality that I want should not require
-179k elisp.
+179k of elisp.
 
 Nowadays (at least since the GNU Emacs 24.4 release), there is a proper
 lisp-reader (de)serialization for frame and window configurations, and
@@ -91,4 +93,4 @@ deals with all frames and =wconf= acknowledges that, there has been zero
 effort (so far) to have =wconf= do something reasonable in that case.  I
 am open to suggestions/pull requests, if they do not substantially
 increase the complexity of the package.  =workgroups= is clever in that
-respect, but most likely I will not go that way.
+respect, but it is unlikely that I will follow that way.

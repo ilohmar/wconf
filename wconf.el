@@ -133,7 +133,8 @@ this can be nil although wc--configs is not empty.")
 ;; global stuff
 
 (defun wc-change-config-default (index config)
-  "Update string representing configuration CONFIG."
+  "Update `wc-string' to represent configuration CONFIG at
+position INDEX."
   (setq wc-string (if wc--configs
                       (wc--to-string index)
                     wc-no-configs-string))
