@@ -176,8 +176,10 @@ position INDEX."
 (defun wc-load (&optional filename)
   "Load stored configurations from FILENAME, defaults to `wc-file'."
   (interactive)
-  (wc--reset)
   (let ((filename (or filename wc-file)))
+    (unless (file-readable-p filename)
+      (error "wc: Cannot read file %s" filename))
+    (wc--reset)
     (with-temp-buffer
       (insert-file-contents filename)
       (goto-char (point-min))
