@@ -1,4 +1,4 @@
-;;; wconf.el --- Minimal window/frame layout manager   -*- lexical-binding: t; -*-
+;;; wconf.el --- Minimal window layout manager   -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014  Free Software Foundation, Inc.
 
@@ -29,8 +29,6 @@
 
 ;;; Code:
 
-(require 'frameset)
-
 (defgroup wconf nil
   "Easily use several window configurations."
   :group 'convenience)
@@ -55,10 +53,10 @@
   "String to use for the empty window configuration."
   :group 'wconf)
 
-
+;; internal variables and helper functions
 
 (defvar wc--configs nil
-  "List of configurations; each item a cons (active . stored).")
+  "List of configurations; each item a list (active stored name).")
 
 (defvar wc--index nil
   "Index of currently shown configuration.  After clean and load
@@ -71,10 +69,9 @@ this can be nil although wc--configs is not empty.")
   (unless wc--configs
     (error "No window configurations")))
 
-(defun wc--current-config (&optional name)
-  (frameset-save nil
-                 :app 'wconf
-                 :name name))
+(defun wc--current-config ()
+  (window-state-get (frame-root-window (selected-frame))
+                    'writable))
 
 (defun wc- (index)
   (nth index wc--configs))
@@ -83,7 +80,7 @@ this can be nil although wc--configs is not empty.")
   (if index
       (format "%s:%s"
               (number-to-string index)
-              (frameset-name (car (wc- index))))
+              (caddr (wc- index)))
     (concat "-:" wc-no-config-name)))
 
 (defun wc--update-info ()
@@ -94,34 +91,15 @@ this can be nil although wc--configs is not empty.")
              (and wc--index
                   (car (wc- wc--index))))))
 
-(defun wc--wrapped-config (new wc)
-  "Returns configuration NEW, with metadata replaced by that of WC."
-  (let ((name (frameset-name wc))
-        (app (frameset-app wc)))
-    (setf (frameset-name new) name
-          (frameset-app new) app)
-    new))
-
 (defun wc--update-active-config ()
   (when wc--index
-    (let ((ac (car (wc- wc--index))))
-      (setf (car (wc- wc--index)) ;not local var..
-            (wc--wrapped-config (wc--current-config) ac)))))
-
-(defvar wc--filter-alist
-  (append
-   (mapcar (lambda (s) (cons s :save))
-           '(foreground-color background-color background-mode
-                              border-color cursor-color mouse-color))
-   (copy-tree frameset-filter-alist))
-  "Standard filters, plus: avoid restoring colors and color mode.")
+    (setf (car (wc- wc--index)) (wc--current-config))))
 
 (defun wc--use-config (index)
   (setq wc--index index)
-  (frameset-restore (car (wc- wc--index))
-                    :reuse-frames t            ;can reuse all
-                    :cleanup-frames t          ;delete unaffected frames
-                    :filters wc--filter-alist) ;instead of frameset-filter-alist
+  (window-state-put (car (wc- wc--index))
+                    (frame-root-window (selected-frame))
+                    'safe)
   (wc--update-info))
 
 (defun wc--reset ()
@@ -129,6 +107,10 @@ this can be nil although wc--configs is not empty.")
   (setq wc--configs nil)
   (setq wc--index nil)
   (wc--update-info))
+
+(defun wc--copy (wc)
+  "Return a deep copy of WC, using `copy-tree'."
+  (copy-tree wc t))
 
 ;; global stuff
 
@@ -145,7 +127,7 @@ position INDEX."
   (interactive)
   (let ((filename (or filename wc-file)))
     (with-temp-file filename
-      (prin1 (mapcar #'cdr wc--configs)
+      (prin1 (mapcar #'cdr wc--configs) ;-> (wc name)
              (current-buffer)))
     (message "wc: Save stored configurations in %s" filename)))
 
@@ -166,12 +148,6 @@ position INDEX."
                 (wc--sanitize-window-tree (cdr x))))
             node))))
 
-(defun wc--sanitize-frameset (f)
-  (mapc (lambda (x)
-          ;; for each frame, only work on window tree
-          (wc--sanitize-window-tree (cddr x)))
-        (frameset-states f)))
-
 ;;;###autoload
 (defun wc-load (&optional filename)
   "Load stored configurations from FILENAME, defaults to `wc-file'."
@@ -185,9 +161,9 @@ position INDEX."
       (goto-char (point-min))
       (setq wc--configs
             (mapcar
-             (lambda (f)
-               (wc--sanitize-frameset f)
-               (cons f (frameset-copy f)))
+             (lambda (f)                ;(wc name)
+               (wc--sanitize-window-tree (car f))
+               (cons (wc--copy (car f)) f))
              (read (current-buffer)))))
     (message "wc: Load stored configurations from %s" filename))
   (wc--update-info))
@@ -207,13 +183,15 @@ one.  The new configuration is appended to the list and becomes active."
                      (progn
                        (message "wc: Created new configuration %s"
                                 (length wc--configs))
-                       (cons (wc--current-config "new")
-                             (wc--current-config "new")))
+                       (list (wc--current-config)
+                             (wc--current-config)
+                             "new"))
                    (let ((wc (wc- wc--index)))
                      (message "wc: Cloned configuration %s"
                               (wc--to-string wc--index))
-                     (cons (frameset-copy (car wc))
-                           (frameset-copy (cdr wc))))))))
+                     (list (wc--copy (car wc))
+                           (wc--copy (cadr wc))
+                           (caddr wc)))))))
   (wc--use-config (1- (length wc--configs))))
 
 (defun wc-kill ()
@@ -252,7 +230,7 @@ one.  The new configuration is appended to the list and becomes active."
   (when wc--index
     (wc--update-active-config)
     (let ((wc (wc- wc--index)))
-      (setf (cdr wc) (frameset-copy (car wc)))))
+      (setf (cadr wc) (wc--copy (car wc)))))
   (message "wc: Stored configuration %s" (wc--to-string wc--index)))
 
 (defun wc-store-all ()
@@ -260,7 +238,7 @@ one.  The new configuration is appended to the list and becomes active."
   (interactive)
   (wc--update-active-config)
   (mapc (lambda (wc)
-          (setf (cdr wc) (frameset-copy (car wc))))
+          (setf (cadr wc) (wc--copy (car wc))))
         wc--configs)
   (message "wc: Stored all configurations"))
 
@@ -269,7 +247,7 @@ one.  The new configuration is appended to the list and becomes active."
   (interactive)
   (when wc--index
     (let ((wc (wc- wc--index)))
-      (setf (car wc) (frameset-copy (cdr wc))))
+      (setf (car wc) (wc--copy (cadr wc))))
     (wc--use-config wc--index))
   (message "wc: Restored configuration %s" (wc--to-string wc--index)))
 
@@ -277,7 +255,7 @@ one.  The new configuration is appended to the list and becomes active."
   "Restore all stored configurations."
   (interactive)
   (mapc (lambda (wc)
-          (setf (car wc) (frameset-copy (cdr wc))))
+          (setf (car wc) (wc--copy (cadr wc))))
         wc--configs)
   (when wc--index
     (wc--use-config wc--index))
@@ -290,8 +268,8 @@ one.  The new configuration is appended to the list and becomes active."
   (interactive
    (list
     (read-string "New window configuration name: "
-                 (frameset-name (car (wc- wc--index))))))
-  (setf (frameset-name (car (wc- wc--index))) name)
+                 (caddr (wc- wc--index)))))
+  (setf (caddr (wc- wc--index)) name)
   (message "wc: Renamed configuration to %s" name)
   (wc--update-info))
 

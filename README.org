@@ -1,6 +1,6 @@
 * wconf
 ** About
-=wconf= is a minimal window/frame layout manager for [[http://www.gnu.org/software/emacs/][GNU Emacs]].  Its
+=wconf= is a minimal window configuration manager for [[http://www.gnu.org/software/emacs/][GNU Emacs]].  Its
 goal is to have several window configurations easily available, to
 switch between them, and to save them to disk and later restore them.
 
@@ -80,17 +80,29 @@ it did not provide a lot of benefit for my personal needs, but added
 still more complexity.  The functionality that I want should not require
 179k of elisp.
 
-Nowadays (at least since the GNU Emacs 24.4 release), there is a proper
-lisp-reader (de)serialization for frame and window configurations, and
-=frameset.el= provides functions to deal with them (relatively)
-comfortably.  Desktop already (re)stores a single configuration.  That's
-when I decided that it's time to roll my own: build something light on
-top of what's already there, in order to provide persistent switchable
-configurations.
+Nowadays (at least since the GNU Emacs 24.4 release), there are proper
+lisp-reader (de)serializations for both frame and window configurations,
+and =window.el= and =frameset.el= provide functions to deal with them
+(relatively) comfortably.  Desktop already (re)stores a single
+configuration.  That's when I decided that it's time to roll my own:
+build something light on top of what's already there, in order to
+provide persistent switchable configurations.
 ** Notes, TODO
-I only use a single fullscreen frame all the time.  While =frameset=
-deals with all frames and =wconf= acknowledges that, there has been zero
-effort (so far) to have =wconf= do something reasonable in that case.  I
-am open to suggestions/pull requests, if they do not substantially
-increase the complexity of the package.  =workgroups= is clever in that
-respect, but it is unlikely that I will follow that way.
+I only use a single fullscreen frame all the time.  An earlier version
+of this package stored configurations as whole framesets, without any
+effort to deal with the multiple-frames case.  It has now changed to
+deal with window configurations in a single frame only.  This is
+much better defined, simpler, and no longer suffers from annoying
+flickering effects.
+
+Calling the package commands from different frames inside a single
+session may or may not result in the behavior you want.  In the latter
+case, feel free to open an issue and describe what happens and what you
+expected/wanted to happen.  I explicitly do /not/ guarantee that the
+code will change to suit your wishes --- but if minor changes could
+render it more generally useful, I am all ears.
+
+I am thinking about some rescaling options to deal with restoring on
+frames of different sizes (possible due to a different screen size).
+Filtering options for what is generally (re)stored (and how) might be a
+pleasant side effect.  Don't hold your breath.
