@@ -124,7 +124,7 @@ position INDEX."
 
 (defun wc-save (&optional filename)
   "Save stored configurations in FILENAME, defaults to `wc-file'."
-  (interactive)
+  (interactive "F")
   (let ((filename (or filename wc-file)))
     (with-temp-file filename
       (prin1 (mapcar #'cdr wc--configs) ;-> (wc name)
@@ -151,7 +151,7 @@ position INDEX."
 ;;;###autoload
 (defun wc-load (&optional filename)
   "Load stored configurations from FILENAME, defaults to `wc-file'."
-  (interactive)
+  (interactive "f")
   (let ((filename (or filename wc-file)))
     (unless (file-readable-p filename)
       (error "wc: Cannot read file %s" filename))
@@ -173,8 +173,12 @@ position INDEX."
 ;;;###autoload
 (defun wc-create (&optional new)
   "Clone the current configuration or create a new \"empty\"
-one.  The new configuration is appended to the list and becomes active."
-  (interactive)
+one.  The new configuration is appended to the list and becomes active.
+
+With optional prefix argument NEW, or if there are no
+configurations yet, create a new configuration from the current
+window config."
+  (interactive "P")
   (wc--update-active-config)
   (setq wc--configs
         (append wc--configs
@@ -212,7 +216,8 @@ one.  The new configuration is appended to the list and becomes active."
 
 (defun wc-swap (i j)
   "Swap configurations at positions I and J."
-  (interactive)
+  (interactive (list wc--index
+                     (read-number "Swap current config with index: ")))
   (wc--update-active-config)
   (let ((wc (wc- i)))
     (setf (nth i wc--configs) (wc- j))
@@ -278,13 +283,15 @@ one.  The new configuration is appended to the list and becomes active."
 (defun wc-switch-to-config (index &optional force)
   "Change to current config INDEX."
   (interactive "p")
-  ;; remember active config (w/o name etc)
-  (wc--update-active-config)
-  ;; maybe use new configuration
-  (when (or (not (eq wc--index index))
-            force)
-    (wc--use-config index))
-  (message "wc: Switched to configuration %s" (wc--to-string index)))
+  (let ((index (or index
+                   (read-number "Switch to config number: "))))
+    ;; remember active config (w/o name etc)
+    (wc--update-active-config)
+    ;; maybe use new configuration
+    (when (or (not (eq wc--index index))
+              force)
+      (wc--use-config index))
+    (message "wc: Switched to configuration %s" (wc--to-string index))))
 
 (defun wc-use-previous ()
   "Switch to previous window configuration."
