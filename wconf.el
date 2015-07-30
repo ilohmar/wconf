@@ -65,6 +65,8 @@ this can be nil although wc--configs is not empty.")
 (defvar wc-string nil
   "String representing information on the current configuration.")
 
+(require 'cl-lib)
+
 (defsubst wc--ensure-configs ()
   (unless wc--configs
     (error "No window configurations")))
@@ -80,7 +82,7 @@ this can be nil although wc--configs is not empty.")
   (if index
       (format "%s:%s"
               (number-to-string index)
-              (caddr (wc- index)))
+              (cl-caddr (wc- index)))
     (concat "-:" wc-no-config-name)))
 
 (defun wc--update-info ()
@@ -195,7 +197,7 @@ window config."
                               (wc--to-string wc--index))
                      (list (wc--copy (car wc))
                            (wc--copy (cadr wc))
-                           (caddr wc)))))))
+                           (cl-caddr wc)))))))
   (wc--use-config (1- (length wc--configs))))
 
 (defun wc-kill ()
@@ -273,8 +275,8 @@ window config."
   (interactive
    (list
     (read-string "New window configuration name: "
-                 (caddr (wc- wc--index)))))
-  (setf (caddr (wc- wc--index)) name)
+                 (cl-caddr (wc- wc--index)))))
+  (setf (cl-caddr (wc- wc--index)) name)
   (message "wc: Renamed configuration to %s" name)
   (wc--update-info))
 
