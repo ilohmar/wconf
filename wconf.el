@@ -67,9 +67,15 @@ this can be nil although wc--configs is not empty.")
 
 (require 'cl-lib)
 
-(defsubst wc--ensure-configs ()
+(defsubst wc--ensure-configs (&optional current)
   (unless wc--configs
-    (error "No window configurations")))
+    (error "wc: No window configurations"))
+  (when (and current (not wc--index))
+    (error "wc: No window configuration is currently used")))
+
+(defsubst wc--ensure-index (&optional index)
+  (unless (<= 0 index (1- (length wc--configs)))
+    (error "wc: No window configuration index %s" index)))
 
 (defun wc--current-config ()
   (window-state-get (frame-root-window (selected-frame))
@@ -192,6 +198,7 @@ window config."
                        (list (wc--current-config)
                              (wc--current-config)
                              "new"))
+                   (wc--ensure-configs 'current)
                    (let ((wc (wc- wc--index)))
                      (message "wc: Cloned configuration %s"
                               (wc--to-string wc--index))
@@ -203,7 +210,7 @@ window config."
 (defun wc-kill ()
   "Kill current configuration."
   (interactive)
-  (wc--ensure-configs)
+  (wc--ensure-configs 'current)
   (let ((old-string (wc--to-string wc--index)))
     (setq wc--configs
           (append (butlast wc--configs (- (length wc--configs) wc--index))
@@ -218,8 +225,15 @@ window config."
 
 (defun wc-swap (i j)
   "Swap configurations at positions I and J."
-  (interactive (list wc--index
-                     (read-number "Swap current config with index: ")))
+  (interactive
+   (progn
+     (wc--ensure-configs 'current)      ;for interactive, we want current config
+     (list
+      wc--index
+      (read-number "Swap current config with index: "))))
+  (wc--ensure-configs)
+  (wc--ensure-index i)
+  (wc--ensure-index j)
   (wc--update-active-config)
   (let ((wc (wc- i)))
     (setf (nth i wc--configs) (wc- j))
@@ -229,71 +243,81 @@ window config."
   (message "wc: Swapped configurations %s and %s"
            (number-to-string i) (number-to-string j)))
 
-;; interaction b/w stored and active configs
-
-(defun wc-store ()
-  "Store currently active configuration."
-  (interactive)
-  (when wc--index
-    (wc--update-active-config)
-    (let ((wc (wc- wc--index)))
-      (setf (cadr wc) (wc--copy (car wc)))))
-  (message "wc: Stored configuration %s" (wc--to-string wc--index)))
-
-(defun wc-store-all ()
-  "Store all active configurations."
-  (interactive)
-  (wc--update-active-config)
-  (mapc (lambda (wc)
-          (setf (cadr wc) (wc--copy (car wc))))
-        wc--configs)
-  (message "wc: Stored all configurations"))
-
-(defun wc-restore ()
-  "Restore stored configuration."
-  (interactive)
-  (when wc--index
-    (let ((wc (wc- wc--index)))
-      (setf (car wc) (wc--copy (cadr wc))))
-    (wc--use-config wc--index))
-  (message "wc: Restored configuration %s" (wc--to-string wc--index)))
-
-(defun wc-restore-all ()
-  "Restore all stored configurations."
-  (interactive)
-  (mapc (lambda (wc)
-          (setf (car wc) (wc--copy (cadr wc))))
-        wc--configs)
-  (when wc--index
-    (wc--use-config wc--index))
-  (message "wc: Restored all configurations"))
-
 ;; manipulate single config
 
 (defun wc-rename (name)
   "Rename current configuration to NAME."
   (interactive
-   (list
-    (read-string "New window configuration name: "
-                 (cl-caddr (wc- wc--index)))))
+   (progn
+     (wc--ensure-configs 'current)
+     (list
+      (read-string "New window configuration name: "
+                   (cl-caddr (wc- wc--index))))))
+  (wc--ensure-configs 'current)
   (setf (cl-caddr (wc- wc--index)) name)
-  (message "wc: Renamed configuration to %s" name)
+  (message "wc: Renamed configuration to \"%s\"" name)
   (wc--update-info))
+
+;; interaction b/w stored and active configs
+
+;; these commands only make sense when there are wc--configs, and after
+;; wc--index has become non-nil
+
+(defsubst wc--store (wc)
+  (setf (cadr wc) (wc--copy (car wc))))
+
+(defsubst wc--restore (wc)
+  (setf (car wc) (wc--copy (cadr wc))))
+
+(defun wc-store ()
+  "Store currently active configuration."
+  (interactive)
+  (wc--ensure-configs 'current)
+  (wc--update-active-config)
+  (wc--store (wc- wc--index))
+  (message "wc: Stored configuration %s" (wc--to-string wc--index)))
+
+(defun wc-store-all ()
+  "Store all active configurations."
+  (interactive)
+  (wc--ensure-configs 'current)
+  (wc--update-active-config)
+  (mapc #'wc--store wc--configs)
+  (message "wc: Stored all configurations"))
+
+(defun wc-restore ()
+  "Restore stored configuration."
+  (interactive)
+  (wc--ensure-configs 'current)
+  (wc--restore (wc- wc--index))
+  (wc--use-config wc--index)
+  (message "wc: Restored configuration %s" (wc--to-string wc--index)))
+
+(defun wc-restore-all ()
+  "Restore all stored configurations."
+  (interactive)
+  (wc--ensure-configs 'current)
+  (mapc #'wc--restore wc--configs)
+  (wc--use-config wc--index)
+  (message "wc: Restored all configurations"))
 
 ;; change config
 
 (defun wc-switch-to-config (index &optional force)
   "Change to current config INDEX."
-  (interactive "p")
+  (interactive "P")
+  (wc--ensure-configs)
   (let ((index (or index
                    (read-number "Switch to config number: "))))
+    (wc--ensure-index index)
     ;; remember active config (w/o name etc)
     (wc--update-active-config)
     ;; maybe use new configuration
-    (when (or (not (eq wc--index index))
-              force)
-      (wc--use-config index))
-    (message "wc: Switched to configuration %s" (wc--to-string index))))
+    (if (and (eq wc--index index)
+             (not force))
+        (message "wc: Nothing to do")
+      (wc--use-config index)
+      (message "wc: Switched to configuration %s" (wc--to-string index)))))
 
 (defun wc-use-previous ()
   "Switch to previous window configuration."
