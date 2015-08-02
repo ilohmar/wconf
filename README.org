@@ -20,27 +20,27 @@ Here is an example from my configuration to show you the intended use of
 #+begin_src emacs-lisp
 (add-hook 'desktop-after-read-hook      ;so we have all buffers again
           (lambda ()
-            (wc-load)
-            (wc-switch-to-config 0)
+            (wconf-load)
+            (wconf-switch-to-config 0)
             (add-hook 'kill-emacs-hook
                       (lambda ()
-                        (wc-store-all)
-                        (wc-save))))
+                        (wconf-store-all)
+                        (wconf-save))))
           'append)
 
-(global-set-key (kbd "C-c w s") #'wc-store)
-(global-set-key (kbd "C-c w S") #'wc-store-all)
-(global-set-key (kbd "C-c w r") #'wc-restore)
-(global-set-key (kbd "C-c w R") #'wc-restore-all)
-(global-set-key (kbd "C-c w w") #'wc-switch-to-config)
-(global-set-key (kbd "C-<prior>") #'wc-use-previous)
-(global-set-key (kbd "C-<next>") #'wc-use-next)
+(global-set-key (kbd "C-c w s") #'wconf-store)
+(global-set-key (kbd "C-c w S") #'wconf-store-all)
+(global-set-key (kbd "C-c w r") #'wconf-restore)
+(global-set-key (kbd "C-c w R") #'wconf-restore-all)
+(global-set-key (kbd "C-c w w") #'wconf-switch-to-config)
+(global-set-key (kbd "C-<prior>") #'wconf-use-previous)
+(global-set-key (kbd "C-<next>") #'wconf-use-next)
 #+end_src
 After =desktop= has restored all file buffers from my last session,
-=wc-load= will get its stored configs from =wc-file= (defaults to
-=<YOUREMACSDIR>/window-configs.el=), and I want it to immediately switch
-to the first configuration.  Then we hook into killing emacs to store
-and save all our configurations in that same file.  The global key
+=wconf-load= will get its stored configs from =wconf-file= (defaults to
+=<YOUREMACSDIR>/wconf-window-configs.el=), and I want it to immediately
+switch to the first configuration.  Then we hook into killing emacs to
+store and save all our configurations in that same file.  The global key
 bindings expose those commands that I consider useful in day-to-day
 work.
 ** Concepts
@@ -57,7 +57,7 @@ the stored one, or do likewise for all configurations.  For example, you
 might decide that you have a carefully hand-crafted set of
 configurations that you always want to start from, but that you do not
 wish to change this setup, except when doing so explicitly.  That's
-easy: just remove the =(wc-store-all)= call from the above hook
+easy: just remove the =(wconf-store-all)= call from the above hook
 function.
 
 A nice feature of =wconf= is that it does not alter any hooks or
@@ -70,7 +70,7 @@ great package, which offers a lot of additional features besides the
 core business of managing window configs.  It also has some
 shortcomings, is somewhat complex (at 79k), and I occasionally
 experienced minor glitches.  Most importantly, it has been unmaintained
-for >3yrs now.
+for roughly 4 years now.
 
 https://github.com/pashinin/workgroups2 promises to pick up where
 workgroups left, and is actively maintained.  The main difference, as I
@@ -91,9 +91,9 @@ provide persistent switchable configurations.
 I only use a single fullscreen frame all the time.  An earlier version
 of this package stored configurations as whole framesets, without any
 effort to deal with the multiple-frames case.  It has now changed to
-deal with window configurations in a single frame only.  This is
-much better defined, simpler, and no longer suffers from annoying
-flickering effects.
+deal with window configurations in a single frame only.  This is much
+better defined, simpler, and no longer suffers from annoying flickering
+effects.
 
 Calling the package commands from different frames inside a single
 session may or may not result in the behavior you want.  In the latter
