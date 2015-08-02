@@ -1,14 +1,14 @@
 ;;; wconf.el --- Minimal window layout manager   -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014  Free Software Foundation, Inc.
+;; Copyright (C) 2014-2015  Free Software Foundation, Inc.
 
 ;; Author: Ingo Lohmar <i.lohmar@gmail.com>
 ;; URL: https://github.com/ilohmar/wconf
-;; Version: 0.1
+;; Version: 0.2.0
 ;; Keywords: windows, frames, layout
 ;; Package-Requires: ((emacs "24.4"))
 
-;; This file is not part of GNU Emacs.
+;; This file is part of GNU Emacs.
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
