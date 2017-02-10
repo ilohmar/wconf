@@ -35,24 +35,29 @@
 
 (defcustom wconf-change-config-function #'wconf-change-config-default
   "Function called with current config whenever it is set."
-  :group 'wconf)
+  :group 'wconf
+  :type 'function)
 
 (defcustom wconf-file (expand-file-name "wconf-window-configs.el"
                                         user-emacs-directory)
   "File used to save and load window configurations."
-  :group 'wconf)
+  :group 'wconf
+  :type 'file)
 
 (defcustom wconf-fallback-buffer-name "*scratch*"
   "Name of the buffer to substitute for buffers which are not available."
-  :group 'wconf)
+  :group 'wconf
+  :type 'string)
 
 (defcustom wconf-no-configs-string "-----"
   "String to use if there are no configurations at all."
-  :group 'wconf)
+  :group 'wconf
+  :type 'string)
 
 (defcustom wconf-no-config-name "---"
   "String to use for the empty window configuration."
-  :group 'wconf)
+  :group 'wconf
+  :type 'string)
 
 ;; internal variables and helper functions
 
