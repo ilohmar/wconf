@@ -128,7 +128,7 @@ this can be nil although wconf--configs is not empty.")
 
 ;; global stuff
 
-(defun wconf-change-config-default (index config)
+(defun wconf-change-config-default (index _config)
   "Update `wconf-string' to represent configuration CONFIG at
 position INDEX."
   (setq wconf-string (if wconf--configs
