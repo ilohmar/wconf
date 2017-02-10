@@ -83,6 +83,10 @@ this can be nil although wconf--configs is not empty.")
   (unless (<= 0 index (1- (length wconf--configs)))
     (error "wconf: No window configuration index %s" index)))
 
+(defsubst wconf--not-from-minibuffer ()
+  (when (minibuffer-window-active-p (frame-selected-window))
+    (error "wconf: Cannot change window configs when minibuffer is active")))
+
 (defun wconf--current-config ()
   (window-state-get (frame-root-window (selected-frame))
                     'writable))
@@ -195,6 +199,7 @@ With optional prefix argument NEW, or if there are no
 configurations yet, create a new configuration from the current
 window config."
   (interactive "P")
+  (wconf--not-from-minibuffer)
   (wconf--update-active-config)
   (setq wconf--configs
         (append wconf--configs
@@ -219,6 +224,7 @@ window config."
   "Kill current configuration."
   (interactive)
   (wconf--ensure-configs 'current)
+  (wconf--not-from-minibuffer)
   (let ((old-string (wconf--to-string wconf--index)))
     (setq wconf--configs
           (append (butlast wconf--configs
@@ -238,6 +244,7 @@ window config."
   (interactive
    (progn
      (wconf--ensure-configs 'current)   ;interactive?  then want current config
+     (wconf--not-from-minibuffer)
      (list
       wconf--index
       (read-number "Swap current config with index: "))))
@@ -299,6 +306,7 @@ window config."
   "Restore stored configuration."
   (interactive)
   (wconf--ensure-configs 'current)
+  (wconf--not-from-minibuffer)
   (wconf--restore (wconf- wconf--index))
   (wconf--use-config wconf--index)
   (message "wconf: Restored configuration %s" (wconf--to-string wconf--index)))
@@ -317,6 +325,7 @@ window config."
   "Change to current config INDEX."
   (interactive "P")
   (wconf--ensure-configs)
+  (wconf--not-from-minibuffer)
   (let ((index (or index
                    (read-number "Switch to config number: "))))
     (wconf--ensure-index index)
