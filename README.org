@@ -1,4 +1,10 @@
 * wconf
+** IMPORTANT NOTICE: PACKAGE OBSOLETE
+GNU Emacs 27.1 comes with ~tab-bar.el~, which provides all features of
+~wconf.el~ that I consider important.
+I will therefore no longer maintain this package.
+This should make no difference in practice, as the code has not been
+changed for more than 3.5 years, anyway.
 ** About
 =wconf= is a minimal window configuration manager for [[http://www.gnu.org/software/emacs/][GNU Emacs]].  Its
 goal is to have several window configurations easily available, to
